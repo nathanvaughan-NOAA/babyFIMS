@@ -1,10 +1,25 @@
+#' Load example data for Atka mackerel test case
+#'
+#' @return
+#' an input data list that includes 'obs_df', a dataframe with the following cols:
+#'obs_type # 0=catch, 1=index, 2=agecom, 3=lencomp
+#' nll_type # 0=dnorm, 1=dmultinom
+#' fit_data # 1/0=TRUE/FALSE
+#' fleet    # 1=fishery, 2=survey
+#' obs      # transformed appropriately for nll_type (becomes keep vec)
+#' obserror # if nll_type obs error is an input (note this is Neff for dmultinom)
+#' @export
+#'
+#' @examples
 example_data <- function(){
-  load("data/am2022.RData")
-  load("data/sizeage_matrix.RData")
+  # load("data/am2022.RData")
+  # load("data/sizeage_matrix.RData")
+  data("am2022")
+  data("sizeage_matrix")
   input$sizeage <- sizeage; rm(sizeage)
-  source("R/helper.R")
+  # source("R/helper.R")
 
-  head(input$obsdf, 5) # long format with all observations
+  # head(input$obsdf, 5) # long format with all observations
   # obs_type # 0=catch, 1=index, 2=agecom, 3=lencomp
   # nll_type # 0=dnorm, 1=dmultinom
   # fit_data # 1/0=TRUE/FALSE
