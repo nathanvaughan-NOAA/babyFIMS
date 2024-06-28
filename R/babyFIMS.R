@@ -1,17 +1,6 @@
-# RTMB 1.5 is not currently working for this example. Issue is tmppred input to
-# dnorm in the observation likelihood for catch/index data. as.numeric() works
-# for RTMB <=1.4 but not 1.5. Use this code can install 1.3 from source:
- packageurl <- "http://cran.r-project.org/src/contrib/Archive/RTMB/RTMB_1.4.tar.gz"
- install.packages(packageurl, repos=NULL, type="source",force=TRUE)
 
 
 
-library(RTMB)
-library(dplyr) 
-library(tidyr)
-library(ggplot2)
-library(ggthemes)
- 
 load("data/am2022.RData")
 load("data/sizeage_matrix.RData")
 input$sizeage <- sizeage; rm(sizeage)
@@ -44,7 +33,7 @@ dat$spawnTimes <- input$sp_frac
 dat$waa <- input$waa
 dat$mature <- input$maturity
 dat$sizeage <- input$sizeage
-dat$fleetTypes <- unique(input$obsdf$fleet) 
+dat$fleetTypes <- unique(input$obsdf$fleet)
 dat$srmode <- 0 #
 dat$logN_mode <- 0 # 0 = deterministic SCAA, 1 = sigR estimated, logR estimated as ranef, 2 = full state-space with/ shared sigN for a > 1 (same as n_NAA_sigma in WHAM)
 
@@ -82,10 +71,10 @@ f<-function(par){ # note dat isn't an argument in the fxn
   getAll(par, dat) # RTMB's attach
   obs <- OBS(obs) # access simulation, OSA residuals
   predObs <- rep(0, nrow(aux))
-  nobs <- length(obs) 
+  nobs <- length(obs)
   nyear <- length(year)
   nage <- length(age)
-  
+
   sigR <- exp(logsigR)
   sigN <- exp(logsigN)
   M <- exp(logM)
@@ -93,10 +82,10 @@ f<-function(par){ # note dat isn't an argument in the fxn
   Fmort <- exp(logFmort)
   fshslx <- exp(logfshslx)
   srvslx <- exp(logsrvslx)
-  Faa <- matrix(data = 1, nrow = nyear, ncol = nage) 
-  for(y in 1:nyear) Faa[y,] = Fmort[y,] * fshslx 
+  Faa <- matrix(data = 1, nrow = nyear, ncol = nage)
+  for(y in 1:nyear) Faa[y,] = Fmort[y,] * fshslx
   Z <- Faa+M
-  
+
   jnll <- 0
 
   # Recruitment ----
@@ -104,7 +93,7 @@ f<-function(par){ # note dat isn't an argument in the fxn
   for(y in 1:nyear) ssb[y] <- calc_ssb(exp(logN[y,]),Faa[y,],M[y,],waa,mature,spawnTimes)
   predlogR <- rep(0, nyear)
   for(y in 1:nyear){
-    thisSSB <- ifelse((y-minAge-1)>(-.5),ssb[y-minAge],ssb[1]) 
+    thisSSB <- ifelse((y-minAge-1)>(-.5),ssb[y-minAge],ssb[1])
     if(srmode==0){ # RW
       if (y == 1){
         predlogR[y] <- logN[y,1] # need to fix this later
@@ -120,15 +109,15 @@ f<-function(par){ # note dat isn't an argument in the fxn
     }
     if(!(srmode %in% c(0, 1, 2))){
       stop(paste("srmode", srmode, "not implemented yet"))
-    }      
+    }
     jnll <- jnll - dnorm(logN[y,1],predlogR[y],sigR,log=TRUE)
-  }  
-  
+  }
+
   # N matrix
   predlogN <- matrix(0, nrow=nyear, ncol=nage)
   for(y in 2:nyear){
     for(a in 2:nage){
-      # full state-space model 
+      # full state-space model
       predlogN[y,a] <- logN[y-1,a-1]-Faa[y-1,a-1]-M[y-1,a-1]
       if(a==nage){
         predlogN[y,a] <- log(exp(predlogN[y,a])+exp(logN[y-1,a]-Faa[y-1,a]-M[y-1,a]))
@@ -142,7 +131,7 @@ f<-function(par){ # note dat isn't an argument in the fxn
   }
 
   # predicted catch ----
-  
+
   # get_pred_logCaa(idx, # lkup vector linking to aux, aux with appropriate flt opts
   #              Z, logN, Faa) # Z, logN, Faa are also vectors
   # need to modify this to allow for multiple fleets
@@ -153,7 +142,7 @@ f<-function(par){ # note dat isn't an argument in the fxn
     y <- which(year == aux$year[i])
     predObs[i] <- log(sum(exp(logpredcatchatage[y,]) * waa)/1e6) # waa in g and aggregate catch in t
   }
-  
+
   # predicted survey biomass ----
   logpredindexatage <- logQ + logsrvslx + logN - Z * sampleTimes
 
@@ -162,9 +151,9 @@ f<-function(par){ # note dat isn't an argument in the fxn
     y <- which(year == aux$year[i])
     predObs[i] <- log(sum(exp(logpredindexatage[y,]) * waa)/1e6) # waa in g and aggregate srv biom in t
   }
-  
+
   # age comps (age error not included) ----
-  
+
   # fishery
   tmp <- exp(logpredcatchatage)
   tmptot <- rowSums(tmp)
@@ -178,62 +167,62 @@ f<-function(par){ # note dat isn't an argument in the fxn
   # combine and vectorize
   tmp3 <- rbind(tmp,tmp2)
   out <- tmp3[1,]
-  
+
   # wow!
   for(i in seq_along(tmp3[,1])[-1]) out <- c(out, tmp3[i,])
-  predObs[which(aux$obs_type == 2)] <- out 
-  
+  predObs[which(aux$obs_type == 2)] <- out
+
   # length comps ----
-  
+
   tmp5 <- exp(logpredcatchatage)
   tmptot5 <- rowSums(tmp5)
   tmp5 <- tmp5/tmptot5
 
   predcatchatlength <- tmp5[,rep(1,length(sizeage[1,]))]
-  
+
   # This is a matrix version of the elementwise loop below
   #
   # predcatchatlength2 <- tmp5[,rep(1,length(sizeage[1,]))]
   # for(i in seq_along(year)){
-  #   predcatchatlength2[i,]<- tmp5[i,] %*% sizeage 
+  #   predcatchatlength2[i,]<- tmp5[i,] %*% sizeage
   # }
-  
+
   for(i in seq_along(year)){
     for(j in seq_along(len)){
       predcatchatlength[i,j] <- sum(sizeage[,j]*tmp5[i,])
     }
   }
-  
+
   tmp6 <- exp(logpredcatchatage)
   tmptot6 <- rowSums(tmp6)
   tmp6 <- tmp6/tmptot6
 
   predcatchatlength2 <- tmp6[,rep(1,length(sizeage[1,]))]
-  
+
   for(i in seq_along(year)){
     for(j in seq_along(len)){
       predcatchatlength2[i,j] <- sum(sizeage[,j]*tmp6[i,])
     }
   }
-  
+
   # combine and vectorize
   tmp7 <- rbind(predcatchatlength,predcatchatlength2)
   out2 <- tmp7[1,]
-  
+
   # wow!
   for(i in seq_along(tmp7[,1])[-1]) out2 <- c(out2, tmp7[i,])
-  predObs[which(aux$obs_type == 3)] <- out2 
-  
+  predObs[which(aux$obs_type == 3)] <- out2
+
   # observational likelihoods ----
-  
+
   for (i in unique(aux$likelihood_index[!is.na(aux$likelihood_index)])){
-    
-    tmp <- aux[which(aux$likelihood_index==i), ] 
+
+    tmp <- aux[which(aux$likelihood_index==i), ]
     tmppred <- predObs[which(aux$likelihood_index==i)]
-    
+
     unique_nll_type <- unique(tmp$nll_type)
     if(length(unique_nll_type)>1) stop("multiple nll types within tmp")
-    
+
     # dnorm for catches, indices
     if(unique_nll_type==0) {
       #browser()
@@ -246,12 +235,12 @@ f<-function(par){ # note dat isn't an argument in the fxn
   }
 
   REPORT(predObs)
-  
+
   ADREPORT(predlogR)
   logssb<-log(ssb)
   ADREPORT(logssb)
   jnll
-}    
+}
 
 fill_vals <- function(x,vals){rep(as.factor(vals), length(x))}
 map <- list()
@@ -268,7 +257,7 @@ tmp[,1] <- 1:nyr
 tmp[1,2:nage] <- (nyr+1):(nyr+nage-1)
 map$logN <- as.factor(as.vector(tmp))
 
-obj <- MakeADFun(f, par, 
+obj <- MakeADFun(f, par,
                  map=map,
                  random=NULL,
                  silent=FALSE)
@@ -282,11 +271,13 @@ sdr <- sdreport(obj)
 sdr
 plr <- as.list(sdr,report=TRUE, "Est")
 plrsd <- as.list(sdr,report=TRUE, "Std")
+
+
 load('data/orig_am2022.Rdata')
 
 Rec <- as.data.frame(arep$R)
 names(Rec) <- c('year', 'R', 'Rec_sd', 'Rec_lci', 'Rec_uci')
-Rec <- Rec %>%  mutate(version = 'amak') %>% 
+Rec <- Rec %>%  mutate(version = 'amak') %>%
   bind_rows(data.frame(year = dat$year,
                R = exp(plr$predlogR)/1e6,
                Rec_uci = exp(plr$predlogR+2*plrsd$predlogR),
@@ -300,8 +291,8 @@ ggplot(Rec %>% filter(year >= 1978), aes(year, (R), col = version)) +
 
 ssb <- as.data.frame(arep$SSB)
 names(ssb) <- c('year', 'ssb', 'ssb_sd', 'ssb_lci', 'ssb_uci')
-ssb <- ssb %>% 
-  mutate(version = 'amak') %>% 
+ssb <- ssb %>%
+  mutate(version = 'amak') %>%
   bind_rows(data.frame(year = dat$year,
                ssb = exp(plr$logssb),
                ssb_uci = exp(plr$logssb+2*plrsd$logssb),
@@ -321,7 +312,7 @@ obj$report() #doesn't work for me
 source("R/obj_fn.R") #an edited version of f using a hand coded dmultinom, and some adjustment to the nll penalty for recruitment
 obj_fn(par)
 
-other_obj <- MakeADFun(obj_fn, par, 
+other_obj <- MakeADFun(obj_fn, par,
                  map=map,
                  random=NULL,
                  silent=FALSE)
