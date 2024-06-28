@@ -1,8 +1,32 @@
+#' Title
+#'
+#' @param Naa
+#' @param Faa
+#' @param M
+#' @param waa
+#' @param mature
+#' @param spawnTimes
+#'
+#' @return
+#' @export
+#'
+#' @examples
 calc_ssb <- function(Naa, Faa, M, waa, mature, spawnTimes){
   sum(Naa*exp((-Faa-M)*spawnTimes)*mature*waa)/1e3
 }
 
 
+#' Title
+#'
+#' @param x
+#' @param N
+#' @param p
+#' @param log
+#'
+#' @return
+#' @export
+#'
+#' @examples
 baby_dmultinom <- function(x, N, p, log = FALSE){
   xp1 = x+1
   logres = lgamma(N + 1) - sum(lgamma(x+1)) + sum(x*log(p))
@@ -11,6 +35,14 @@ baby_dmultinom <- function(x, N, p, log = FALSE){
 }
 
 # get unique ID (integer value) for each data set
+#' Title
+#'
+#' @param myaux
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_id <- function(myaux){
   myaux <- myaux %>%
     dplyr::group_by(obs_type, nll_type, fleet) %>%
@@ -21,6 +53,14 @@ get_id <- function(myaux){
 
 
 #Add a likelihood calculation index to the obs data frame
+#' Title
+#'
+#' @param myaux
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_likelihood_index <- function(myaux) {
   # myaux <- input$obsdf
   myaux$likelihood_index <- NA
@@ -58,6 +98,15 @@ get_likelihood_index <- function(myaux) {
 
 # get prediction dataframe for observations (expanding to the full range of
 # observations)
+#' Title
+#'
+#' @param myaux
+#' @param myinput
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_pred <- function(myaux, myinput) {
   # myaux <- dat$aux; myinput <- input
   lkup <- myaux %>% dplyr::distinct(id, obs_type, nll_type, fleet)

@@ -1,3 +1,11 @@
+#' Title
+#'
+#' @param par
+#'
+#' @return
+#' @export
+#'
+#' @examples
 obj_fn<-function(par){ # note dat isn't an argument in the fxn
   getAll(par, dat) # RTMB's attach
   obs <- OBS(obs) # access simulation, OSA residuals

@@ -34,6 +34,14 @@ example_data <- function(){
   return()
 }
 
+#' Title
+#'
+#' @param input
+#'
+#' @return
+#' @export
+#'
+#' @examples
 example_dat<-function(input){
   # data list ----
   dat <- list()
@@ -59,6 +67,14 @@ example_dat<-function(input){
   dat$aux <- get_pred(dat$aux, input)
 }
 
+#' Title
+#'
+#' @param input
+#'
+#' @return
+#' @export
+#'
+#' @examples
 example_par<-function(input){
   # parameter ----
   par <- list()
@@ -77,6 +93,12 @@ example_par<-function(input){
   return(par)
 }
 
+#' Title
+#'
+#' @return
+#' @export
+#'
+#' @examples
 example_map <- function(){
   fill_vals <- function(x,vals){rep(as.factor(vals), length(x))}
   map <- list()
