@@ -478,14 +478,47 @@ pred_recruitment <- get_recruit(ssb,rzero,steep,phi_0)
 #over priors and observations to sum likelihood components
 
 NLL <- 0
-parameters <- vector()
-priors <- vector()
 
-for(i in seq_along(parameters)){
+prior_likelihoods <- data.frame(likelihood_group=rep(1,4),
+                                component_label=c("likelihood_model",
+                                                  "estimated_value",
+                                                  "expected_value",
+                                                  "uncertainty"),
+                                component_value=c("normal",
+                                                  3.5,
+                                                  4,
+                                                  .5))
+
+data_likelihoods <- data.frame(likelihood_group=rep(1,4),
+                                component_label=c("likelihood_model",
+                                                  "estimated_value",
+                                                  "expected_value",
+                                                  "uncertainty"),
+                                component_value=c("normal",
+                                                  3.5,
+                                                  4,
+                                                  .5))
+
+#loop over all specified prior likelihoods
+#
+#Could use an xyz style array maybe with columns for:
+#1) likelihood group
+#2) component label (i.e. likelihood model, estimated value, expected value, uncertainty parameter)
+#3) component value
+#
+#Using this approach it's easy to have complex likelihoods like multivariate by
+#having uniform ways to specify all the values such as estimated_value_1 : n etc
+#The loop below would then just loop over unique values of likelihood group
+#not sure that this meshes with the C++ approach though?
+#
+#These inputs could all use names such as likelihood_model or a numbering system
+#
+for(i in seq_along(unique(prior_likelihoods['likelihood_group']))){
 
 }
 
-for(i in seq_along(data_sources)){
+#Do the same thing for data likelihoods
+for(i in seq_along(unique(data_likelihoods['likelihood_group']))){
 
 }
 
